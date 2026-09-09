@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wisol 명함 생성기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            max-width: 1000px;
+            width: 100%;
+            align-items: center;
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+        }
+
+        /* 입력 폼 섹션 */
+        .form-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-section h2 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: #f0f4ff;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* 카드 섹션 */
+        .card-section {
+            perspective: 1000px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card-wrapper {
+            width: 100%;
+            max-width: 380px;
+            height: 240px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .card-wrapper:hover .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 카드 앞면 */
+        .card-front {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-front::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0%, 100% {
+                transform: rotate(0deg);
+            }
+            50% {
+                transform: rotate(180deg);
+            }
+        }
+
+        .card-logo {
+            font-size: 28px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #FFD89B 0%, #FFA500 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-name {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-department {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card-divider {
+            width: 40px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.6);
+            margin-bottom: 15px;
+        }
+
+        .card-likes {
+            font-size: 12px;
+            opacity: 0.85;
+            line-height: 1.6;
+            max-height: 60px;
+            overflow: hidden;
+        }
+
+        .card-footer {
+            font-size: 11px;
+            opacity: 0.7;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 카드 뒷면 */
+        .card-back {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            transform: rotateY(180deg);
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-back::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: shine 3s infinite reverse;
+        }
+
+        .card-back-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-back-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .card-back-text {
+            font-size: 14px;
+            line-height: 1.8;
+            opacity: 0.9;
+            font-style: italic;
+        }
+
+        .card-instruction {
+            font-size: 11px;
+            margin-top: 30px;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* 빈 상태 메시지 */
+        .placeholder {
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+            font-size: 14px;
+        }
+
+        /* 애니메이션 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-face {
+            animation: fadeIn 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 입력 폼 섹션 -->
+        <div class="form-section">
+            <h2>🎴 명함 정보 입력</h2>
+            
+            <div class="form-group">
+                <label for="nameInput">이름 *</label>
+                <input 
+                    type="text" 
+                    id="nameInput" 
+                    placeholder="예: 김수정"
+                    maxlength="20"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="departmentInput">부서 *</label>
+                <input 
+                    type="text" 
+                    id="departmentInput" 
+                    placeholder="예: Marketing Director"
+                    maxlength="30"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="likesInput">좋아하는 것</label>
+                <textarea 
+                    id="likesInput" 
+                    placeholder="예: 음악, 여행, 책을 좋아합니다.&#10;새로운 경험을 즐기는 사람입니다."
+                    maxlength="150"
+                ></textarea>
+            </div>
+        </div>
+
+        <!-- 명함 카드 섹션 -->
+        <div class="card-section">
+            <div class="card-wrapper" id="cardWrapper">
+                <div class="card-inner">
+                    <!-- 카드 앞면 -->
+                    <div class="card-face card-front">
+                        <div>
+                            <div class="card-logo">🧭 WISOL</div>
+                            <div class="card-content">
+                                <div class="card-name" id="displayName">
+                                    <span class="placeholder">이름을 입력하세요</span>
+                                </div>
+                                <div class="card-department" id="displayDepartment">
+                                    <span class="placeholder">부서를 입력하세요</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            ✦ Hover to flip ✦
+                        </div>
+                    </div>
+
+                    <!-- 카드 뒷면 -->
+                    <div class="card-face card-back">
+                        <div class="card-back-content">
+                            <div class="card-back-title">About Me</div>
+                            <div class="card-back-text" id="displayLikes">
+                                <span class="placeholder">좋아하는 것을 입력하면 여기 나타납니다</span>
+                            </div>
+                            <div class="card-instruction">
+                                - Hover to flip -
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const nameInput = document.getElementById('nameInput');
+        const departmentInput = document.getElementById('departmentInput');
+        const likesInput = document.getElementById('likesInput');
+
+        const displayName = document.getElementById('displayName');
+        const displayDepartment = document.getElementById('displayDepartment');
+        const displayLikes = document.getElementById('displayLikes');
+
+        // 실시간 업데이트
+        nameInput.addEventListener('input', updateCard);
+        departmentInput.addEventListener('input', updateCard);
+        likesInput.addEventListener('input', updateCard);
+
+        function updateCard() {
+            const name = nameInput.value.trim();
+            const department = departmentInput.value.trim();
+            const likes = likesInput.value.trim();
+
+            // 이름 업데이트
+            if (name) {
+                displayName.textContent = name;
+                displayName.classList.remove('placeholder-text');
+            } else {
+                displayName.innerHTML = '<span class="placeholder">이름을 입력하세요</span>';
+            }
+
+            // 부서 업데이트
+            if (department) {
+                displayDepartment.textContent = department;
+                displayDepartment.classList.remove('placeholder-text');
+            } else {
+                displayDepartment.innerHTML = '<span class="placeholder">부서를 입력하세요</span>';
+            }
+
+            // 좋아하는 것 업데이트
+            if (likes) {
+                displayLikes.textContent = likes;
+                displayLikes.classList.remove('placeholder-text');
+            } else {
+                displayLikes.innerHTML = '<span class="placeholder">좋아하는 것을 입력하면 여기 나타납니다</span>';
+            }
+        }
+
+        // 초기화
+        updateCard();
+        nameInput.focus();
+    </script>
+</body>
+</html>

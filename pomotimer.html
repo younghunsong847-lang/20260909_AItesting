@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포모도로 타이머</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: background 1s ease;
+        }
+
+        body.focus-mode {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        body.break-mode {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        body.completed {
+            background: #fff44f;
+            animation: pulse-bg 0.5s ease-in-out;
+        }
+
+        @keyframes pulse-bg {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .timer-wrapper {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto 40px;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .progress-circle {
+            transition: stroke-dashoffset 1s linear;
+        }
+
+        .timer-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 64px;
+            font-weight: bold;
+            color: #333;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timer-label {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 16px;
+            color: #666;
+            font-weight: normal;
+            margin-top: 60px;
+        }
+
+        .session-info {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #666;
+        }
+
+        .session-info.focus {
+            color: #f5576c;
+            font-weight: bold;
+        }
+
+        .session-info.break {
+            color: #00f2fe;
+            font-weight: bold;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .btn-start {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-start:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-pause {
+            background: #FFA500;
+            color: white;
+        }
+
+        .btn-pause:hover {
+            background: #ff8c00;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 165, 0, 0.4);
+        }
+
+        .btn-reset {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #da190b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .stats {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+            color: #666;
+        }
+
+        .stats p {
+            margin: 8px 0;
+        }
+
+        .notification {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            animation: slideIn 0.5s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍅 포모도로 타이머</h1>
+        
+        <div class="session-info" id="sessionInfo">
+            집중 시간: 25분 남음
+        </div>
+
+        <div class="timer-wrapper">
+            <svg viewBox="0 0 100 100">
+                <!-- 배경 원 -->
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#e0e0e0" stroke-width="8"></circle>
+                <!-- 진행도 원 -->
+                <circle
+                    class="progress-circle"
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke="#4CAF50"
+                    stroke-width="8"
+                    stroke-dasharray="282.6"
+                    stroke-dashoffset="0"
+                    stroke-linecap="round"
+                ></circle>
+            </svg>
+            <div class="timer-display" id="timerDisplay">25:00</div>
+            <div class="timer-label" id="timerLabel">집중</div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-start" id="startBtn" onclick="startTimer()">▶ 시작</button>
+            <button class="btn-pause" id="pauseBtn" onclick="pauseTimer()" disabled>⏸ 일시정지</button>
+            <button class="btn-reset" id="resetBtn" onclick="resetTimer()">↻ 리셋</button>
+        </div>
+
+        <div class="stats">
+            <p>📊 총 세션 수: <strong id="totalSessions">0</strong></p>
+            <p>✅ 완료된 집중 시간: <strong id="completedFocus">0</strong>분</p>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // 타이머 상태
+        const FOCUS_TIME = 25 * 60; // 25분
+        const BREAK_TIME = 5 * 60;  // 5분
+        
+        let timeLeft = FOCUS_TIME;
+        let totalTime = FOCUS_TIME;
+        let isRunning = false;
+        let isFocusMode = true;
+        let timerInterval = null;
+        let totalSessions = 0;
+        let completedFocusTime = 0;
+
+        const timerDisplay = document.getElementById('timerDisplay');
+        const timerLabel = document.getElementById('timerLabel');
+        const sessionInfo = document.getElementById('sessionInfo');
+        const progressCircle = document.querySelector('.progress-circle');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const notification = document.getElementById('notification');
+        const totalSessionsDisplay = document.getElementById('totalSessions');
+        const completedFocusDisplay = document.getElementById('completedFocus');
+
+        // 오디오 컨텍스트 생성
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        function updateDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            
+            // 진행도 원 업데이트
+            const progress = (totalTime - timeLeft) / totalTime;
+            const circumference = 2 * Math.PI * 45;
+            const offset = circumference * (1 - progress);
+            progressCircle.style.strokeDashoffset = offset;
+
+            // 세션 정보 업데이트
+            if (isFocusMode) {
+                sessionInfo.textContent = `집중 시간: ${minutes}분 ${seconds}초 남음`;
+                sessionInfo.className = 'session-info focus';
+                progressCircle.style.stroke = '#f5576c';
+            } else {
+                sessionInfo.textContent = `휴식 시간: ${minutes}분 ${seconds}초 남음`;
+                sessionInfo.className = 'session-info break';
+                progressCircle.style.stroke = '#00f2fe';
+            }
+        }
+
+        function playNotificationSound() {
+            const now = audioContext.currentTime;
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+
+            // 알림음 효과
+            osc.frequency.setValueAtTime(800, now);
+            osc.frequency.setValueAtTime(600, now + 0.1);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.setValueAtTime(0, now + 0.2);
+
+            osc.start(now);
+            osc.stop(now + 0.2);
+        }
+
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function completeSession() {
+            playNotificationSound();
+            
+            if (isFocusMode) {
+                // 집중 시간 완료
+                completedFocusTime += 25;
+                completedFocusDisplay.textContent = completedFocusTime;
+                totalSessions++;
+                totalSessionsDisplay.textContent = totalSessions;
+                
+                // 화면 효과
+                document.body.classList.add('completed');
+                setTimeout(() => {
+                    document.body.classList.remove('completed');
+                }, 1000);
+                
+                showNotification('🎉 집중 시간 완료! 5분 휴식을 시작합니다.');
+                isFocusMode = false;
+                timeLeft = BREAK_TIME;
+                totalTime = BREAK_TIME;
+                timerLabel.textContent = '휴식';
+            } else {
+                // 휴식 시간 완료
+                document.body.classList.add('completed');
+                setTimeout(() => {
+                    document.body.classList.remove('completed');
+                }, 1000);
+                
+                showNotification('✨ 휴식 완료! 다시 집중해볼까요?');
+                isFocusMode = true;
+                timeLeft = FOCUS_TIME;
+                totalTime = FOCUS_TIME;
+                timerLabel.textContent = '집중';
+            }
+
+            updateDisplay();
+        }
+
+        function startTimer() {
+            if (isRunning) return;
+            
+            isRunning = true;
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+            document.body.classList.toggle('focus-mode', isFocusMode);
+            document.body.classList.toggle('break-mode', !isFocusMode);
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    isRunning = false;
+                    startBtn.disabled = false;
+                    pauseBtn.disabled = true;
+                    document.body.classList.remove('focus-mode', 'break-mode');
+                    completeSession();
+                    return;
+                }
+
+                updateDisplay();
+            }, 1000);
+
+            updateDisplay();
+        }
+
+        function pauseTimer() {
+            if (!isRunning) return;
+
+            isRunning = false;
+            clearInterval(timerInterval);
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            document.body.classList.remove('focus-mode', 'break-mode');
+        }
+
+        function resetTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            
+            if (isFocusMode) {
+                timeLeft = FOCUS_TIME;
+                totalTime = FOCUS_TIME;
+            } else {
+                timeLeft = BREAK_TIME;
+                totalTime = BREAK_TIME;
+            }
+
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            document.body.classList.remove('focus-mode', 'break-mode');
+            updateDisplay();
+        }
+
+        // 초기 표시
+        updateDisplay();
+    </script>
+</body>
+</html>
